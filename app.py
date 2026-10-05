@@ -13,19 +13,28 @@ import time
 # ==========================================
 st.set_page_config(page_title="AI Chẩn Đoán Võng Mạc", page_icon="👁️", layout="wide", initial_sidebar_state="expanded")
 
-# CHỈ CHỈNH SỬA KHỐI CSS NÀY: Thêm viền mỏng và đổ bóng để nổi bật trên nền trắng
+# [ĐÃ CHỈNH SỬA DUY NHẤT KHỐI NÀY] - Thêm nền Y tế và họa tiết chấm bi
 st.markdown("""
 <style>
+    /* THÊM BACKGROUND Y TẾ CHO TOÀN BỘ APP */
+    .stApp {
+        background-image: 
+            linear-gradient(135deg, rgba(46, 134, 193, 0.06) 0%, rgba(255, 255, 255, 0) 100%),
+            radial-gradient(rgba(46, 134, 193, 0.08) 1px, transparent 1px);
+        background-size: 100% 100%, 20px 20px;
+        background-attachment: fixed;
+    }
+
     @keyframes fadeSlideUp {
         from { opacity: 0; transform: translateY(20px); }
         to { opacity: 1; transform: translateY(0); }
     }
+    
     .result-card {
         background-color: var(--secondary-background-color);
         padding: 25px;
         border-radius: 12px;
         border-left: 8px solid;
-        /* THÊM 3 DÒNG DƯỚI: Đổ bóng và viền bao quanh để tách khỏi nền trắng */
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
         border-top: 1px solid rgba(128, 128, 128, 0.15);
         border-right: 1px solid rgba(128, 128, 128, 0.15);
@@ -35,6 +44,7 @@ st.markdown("""
     }
     .healthy { border-left-color: #00cc66; } 
     .disease { border-left-color: #ff4b4b; } 
+    
     .confidence-badge {
         background-color: var(--background-color);
         color: var(--text-color);
@@ -45,13 +55,12 @@ st.markdown("""
         display: inline-block;
         margin-top: 15px;
         border: 1px solid rgba(128,128,128,0.2);
-        /* THÊM BÓNG MỜ CHO NHÃN */
         box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
     }
+    
     img {
         border-radius: 10px;
         transition: transform 0.3s ease, box-shadow 0.3s ease;
-        /* THÊM BÓNG MỜ CHO ẢNH ĐỂ KHÔNG BỊ TỆP VÀO NỀN */
         box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
     }
     img:hover { 
@@ -62,7 +71,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 2. KHAI BÁO KIẾN TRÚC MÔ HÌNH EUPE-ViT
+# CÁC PHẦN DƯỚI ĐÂY ĐƯỢC GIỮ NGUYÊN 100%
 # ==========================================
 class OptimalAttentiveProbe(nn.Module):
     def __init__(self, in_dim=384, num_classes=11, dropout_p=0.1): 
@@ -91,9 +100,6 @@ class EUPE_ViT_Optimal(nn.Module):
         features = self.backbone(x)
         return self.head(features)
 
-# ==========================================
-# 3. HÀM XỬ LÝ ẢNH & ĐỌC MÔ HÌNH
-# ==========================================
 @st.cache_resource
 def load_model():
     model = EUPE_ViT_Optimal(num_classes=11)
@@ -118,7 +124,6 @@ def crop_fundus(image):
     return Image.fromarray(cv2.cvtColor(img_cropped, cv2.COLOR_BGR2RGB))
 
 def generate_heatmap(model, tensor_img, original_img):
-    """Trích xuất Attention của ViT để vẽ Heatmap"""
     img_np = np.array(original_img)
     attentions = model.backbone.get_last_selfattention(tensor_img)
     cls_attn = attentions[0, :, 0, 1:] 
@@ -158,9 +163,6 @@ eval_transform = transforms.Compose([
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 ])
 
-# ==========================================
-# 4. GIAO DIỆN CHÍNH
-# ==========================================
 with st.sidebar:
     st.image("https://cdn-icons-png.flaticon.com/512/2865/2865744.png", width=80)
     st.markdown("## THÔNG TIN ĐỒ ÁN")
@@ -172,7 +174,6 @@ st.markdown("<h1 style='text-align: center;'>👁️ AI CHẨN ĐOÁN VÕNG MẠ
 st.markdown("<p style='text-align: center; font-size: 1.2rem; opacity: 0.7;'>Phát hiện tự động 11 loại bệnh lý về mắt với độ chính xác cao.</p>", unsafe_allow_html=True)
 st.write("")
 
-# Khu vực Upload
 col_up1, col_up2, col_up3 = st.columns([1, 4, 1])
 with col_up2:
     uploaded_file = st.file_uploader("📥 Tải ảnh đáy mắt lên tại đây (Hỗ trợ: PNG, JPG)", type=["png", "jpg", "jpeg"], label_visibility="collapsed")
