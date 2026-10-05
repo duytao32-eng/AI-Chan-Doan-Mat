@@ -13,38 +13,51 @@ import time
 # ==========================================
 st.set_page_config(page_title="AI Chẩn Đoán Võng Mạc", page_icon="👁️", layout="wide", initial_sidebar_state="expanded")
 
-# [ĐÃ CHỈNH SỬA DUY NHẤT KHỐI NÀY] - Thêm nền Y tế và họa tiết chấm bi
+# --- BẢN VÁ LỖI HIỂN THỊ NỀN ---
 st.markdown("""
 <style>
-    /* THÊM BACKGROUND Y TẾ CHO TOÀN BỘ APP */
+    /* 1. TẠO ẢNH NỀN Y TẾ FULL TRANG (FIX LỖI MẤT NỀN) */
     .stApp {
-        background-image: 
-            linear-gradient(135deg, rgba(46, 134, 193, 0.06) 0%, rgba(255, 255, 255, 0) 100%),
-            radial-gradient(rgba(46, 134, 193, 0.08) 1px, transparent 1px);
-        background-size: 100% 100%, 20px 20px;
+        background-image: url("https://img.freepik.com/free-vector/abstract-medical-wallpaper-with-hexagons_53876-116526.jpg");
+        background-size: cover;
         background-attachment: fixed;
+        background-position: center;
+    }
+    
+    /* 2. PHỦ LỚP KÍNH MỜ (GLASSMORPHISM) ĐỂ CHỮ VẪN ĐỌC ĐƯỢC */
+    .block-container {
+        background: var(--background-color);
+        /* Độ mờ thay đổi tự động: 90% để không bị rối mắt */
+        background-color: color-mix(in srgb, var(--background-color) 90%, transparent);
+        border-radius: 15px;
+        padding-top: 2rem;
+        padding-bottom: 2rem;
+        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        backdrop-filter: blur(10px);
+        margin-top: 20px;
     }
 
+    /* 3. ĐỔ BÓNG VÀ VIỀN TÁCH BIỆT CHO KHUNG KẾT QUẢ */
     @keyframes fadeSlideUp {
         from { opacity: 0; transform: translateY(20px); }
         to { opacity: 1; transform: translateY(0); }
     }
-    
     .result-card {
         background-color: var(--secondary-background-color);
         padding: 25px;
         border-radius: 12px;
         border-left: 8px solid;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-        border-top: 1px solid rgba(128, 128, 128, 0.15);
-        border-right: 1px solid rgba(128, 128, 128, 0.15);
-        border-bottom: 1px solid rgba(128, 128, 128, 0.15);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        border-top: 1px solid rgba(128, 128, 128, 0.2);
+        border-right: 1px solid rgba(128, 128, 128, 0.2);
+        border-bottom: 1px solid rgba(128, 128, 128, 0.2);
         animation: fadeSlideUp 0.5s ease-out forwards;
         margin: 10px 0px 25px 0px;
     }
     .healthy { border-left-color: #00cc66; } 
     .disease { border-left-color: #ff4b4b; } 
     
+    /* 4. CHỈNH CHU CÁC CHI TIẾT NHỎ */
     .confidence-badge {
         background-color: var(--background-color);
         color: var(--text-color);
@@ -55,24 +68,28 @@ st.markdown("""
         display: inline-block;
         margin-top: 15px;
         border: 1px solid rgba(128,128,128,0.2);
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
     }
     
     img {
         border-radius: 10px;
         transition: transform 0.3s ease, box-shadow 0.3s ease;
-        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
     }
     img:hover { 
         transform: scale(1.02); 
-        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
+        box-shadow: 0 12px 20px rgba(0, 0, 0, 0.15);
+    }
+    
+    /* Chỉnh nút bấm upload ảnh chìm vào nền */
+    .css-1v0mbdj.etr89bj1 {
+        background-color: transparent !important;
     }
 </style>
 """, unsafe_allow_html=True)
-
 # ==========================================
-# CÁC PHẦN DƯỚI ĐÂY ĐƯỢC GIỮ NGUYÊN 100%
-# ==========================================
+# TỪ DÒNG NÀY TRỞ XUỐNG BẠN GIỮ NGUYÊN CODE CŨ
+# ... (Code mô hình và giao diện st.columns)
 class OptimalAttentiveProbe(nn.Module):
     def __init__(self, in_dim=384, num_classes=11, dropout_p=0.1): 
         super().__init__()
