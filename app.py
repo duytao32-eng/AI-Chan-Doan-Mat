@@ -19,129 +19,65 @@ def change_page(page_name):
     st.session_state.current_page = page_name
 
 # ==========================================
-# 2. CSS DYNAMIC TÙY THEO TRANG
+# 2. CSS TINH GỌN (CHỈ CHỨA NHỮNG CẦN THIẾT NHẤT ĐỂ TRÁNH LỖI)
 # ==========================================
-if st.session_state.current_page == 'home':
-    st.markdown("""
-        <style>
-            .stApp { background-color: transparent !important; }
-            [data-testid="stHeader"] { display: none !important; }
-            
-            #background-image {
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100vw;
-                height: 100vh;
-                background-image: url("https://t3.ftcdn.net/jpg/00/79/70/58/360_F_79705868_f21hI0uSihy1yJq0H7sFmB2tO027q8bU.jpg");
-                background-size: cover;
-                background-position: center;
-                z-index: -1; 
-            }
-            
-            /* Đã đưa nút bấm vào chung khối này để không bị văng */
-            .glass-box {
-                background-color: rgba(15, 32, 39, 0.85); 
-                backdrop-filter: blur(10px);
-                border-radius: 20px;
-                padding: 4rem 3rem;
-                margin: 15vh auto;
-                max-width: 900px;
-                text-align: center;
-                box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-                border: 1px solid rgba(255,255,255,0.1);
-                position: relative;
-                z-index: 10;
-            }
-            
-            h1 { color: #ffffff !important; font-size: 3.5rem !important; margin-bottom: 20px !important; letter-spacing: 1px; }
-            .intro-text { color: #e0e0e0 !important; font-size: 1.25rem !important; line-height: 1.8 !important; text-align: justify; margin-bottom: 40px; }
-            
-            /* CSS chung cho nút bấm */
-            div.stButton {
-                display: flex;
-                justify-content: center;
-                width: 100%;
-            }
-            div.stButton > button {
-                background: linear-gradient(135deg, #1f77b4, #2874A6) !important;
-                color: white !important;
-                border-radius: 30px !important;
-                padding: 15px 40px !important;
-                font-size: 20px !important;
-                font-weight: bold !important;
-                border: none !important;
-                transition: all 0.3s ease !important;
-                box-shadow: 0 8px 20px rgba(31, 119, 180, 0.4) !important;
-            }
-            div.stButton > button:hover {
-                transform: scale(1.05) !important;
-                box-shadow: 0 12px 30px rgba(31, 119, 180, 0.7) !important;
-            }
-            [data-testid="collapsedControl"] { display: none; }
-        </style>
-        <div id="background-image"></div>
-    """, unsafe_allow_html=True)
+st.markdown("""
+<style>
+    /* Ép khoảng trống phía trên cùng nhỏ lại để không phải cuộn chuột */
+    .block-container { padding-top: 1rem !important; max-width: 1400px; }
+    
+    /* Thiết kế nút bấm mượt mà (áp dụng chung) */
+    div.stButton > button {
+        background: linear-gradient(135deg, #1f77b4, #2874A6);
+        color: white !important;
+        border-radius: 8px;
+        padding: 10px 20px;
+        font-weight: bold;
+        border: none;
+        transition: all 0.3s;
+        width: 100%;
+    }
+    div.stButton > button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(31, 119, 180, 0.4);
+    }
 
-else:
-    # --- ĐÃ SỬA LỖI MẤT CHỮ: Sử dụng class mặc định của markdown thay vì ép HTML phức tạp ---
-    st.markdown("""
-    <style>
-        .stApp { background-color: var(--background-color); }
-        .block-container { padding-top: 1rem !important; max-width: 1400px; }
-        
-        /* Thay vì dùng CSS HTML, ta sẽ dùng st.markdown chuẩn của Python ở phần giao diện để hệ thống tự bắt màu */
-        
-        .result-placeholder {
-            background-color: var(--secondary-background-color);
-            border: 2px dashed rgba(128,128,128,0.3);
-            border-radius: 15px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 420px; 
-            text-align: center;
-            padding: 20px;
-        }
-        
-        /* Ghi đè lại nút bấm cho trang chẩn đoán để không bị dính hiệu ứng gradient của trang chủ */
-        div.stButton > button {
-            background: #34495e !important;
-            border-radius: 8px !important;
-            padding: 12px !important;
-            font-size: 16px !important;
-            width: 100% !important;
-            box-shadow: none !important;
-        }
-        div.stButton > button:hover { 
-            background: #2c3e50 !important; 
-            transform: translateY(-2px) !important; 
-        }
-        
-        /* Đặc biệt: Nút quay lại cần nhỏ gọn */
-        .back-btn-container div.stButton > button {
-            width: auto !important;
-            padding: 8px 15px !important;
-        }
-        
-        .ai-result-card {
-            background-color: var(--secondary-background-color);
-            border-radius: 12px;
-            padding: 20px;
-            border-left: 6px solid #28b463;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-            margin-bottom: 20px;
-        }
-        .ai-disease { border-left-color: #e74c3c; }
-        
-        .title-compact { font-size: 2rem !important; margin-bottom: 0px !important; padding-bottom: 0px !important;}
-        .subtitle-compact { font-size: 1rem !important; margin-top: 5px !important; margin-bottom: 15px !important;}
-    </style>
-    """, unsafe_allow_html=True)
+    /* Thiết kế riêng nút Trang chủ cho to và nổi bật */
+    .home-btn div.stButton > button {
+        padding: 15px 40px !important;
+        font-size: 1.2rem !important;
+        border-radius: 30px !important;
+    }
+    
+    /* Thẻ kết quả AI */
+    .result-placeholder {
+        background-color: var(--secondary-background-color);
+        border: 2px dashed rgba(128,128,128,0.3);
+        border-radius: 15px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 380px; /* Thu gọn chiều cao để vừa màn hình */
+        color: var(--text-color);
+        text-align: center;
+        padding: 20px;
+    }
+    .ai-result-card {
+        background-color: var(--secondary-background-color);
+        border-radius: 12px;
+        padding: 20px;
+        border-left: 6px solid #28b463;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        margin-bottom: 20px;
+    }
+    .ai-disease { border-left-color: #e74c3c; }
+    [data-testid="collapsedControl"] { display: none; }
+</style>
+""", unsafe_allow_html=True)
 
 # ==========================================
-# 3. KHAI BÁO KIẾN TRÚC MÔ HÌNH (GIỮ NGUYÊN)
+# 3. KHAI BÁO KIẾN TRÚC MÔ HÌNH (GIỮ NGUYÊN 100%)
 # ==========================================
 class OptimalAttentiveProbe(nn.Module):
     def __init__(self, in_dim=384, num_classes=11, dropout_p=0.1): 
@@ -202,70 +138,66 @@ class_names = ['Advanced/End-stage Glaucoma', 'Dry Age-Related Macular Degenerat
 eval_transform = transforms.Compose([transforms.Resize((224, 224)), transforms.ToTensor(), transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
 
 # ==========================================
-# 4. GIAO DIỆN HIỂN THỊ
+# 4. GIAO DIỆN HIỂN THỊ 
 # ==========================================
 
 if st.session_state.current_page == 'home':
-    # Nút bấm đã được đưa thẳng vào trong container, sử dụng cột ảo để ép ra giữa
-    with st.container():
-        st.markdown("<div class='glass-box'>", unsafe_allow_html=True)
+    # --- TRANG CHỦ: Sử dụng hàm in ảnh trực tiếp của Streamlit để đảm bảo hiện ảnh ---
+    col1, col2, col3 = st.columns([1, 4, 1])
+    with col2:
+        st.markdown("<h1 style='text-align: center;'>HỆ THỐNG CHẨN ĐOÁN VÕNG MẠC AI</h1>", unsafe_allow_html=True)
+        st.image("https://t3.ftcdn.net/jpg/00/79/70/58/360_F_79705868_f21hI0uSihy1yJq0H7sFmB2tO027q8bU.jpg", use_container_width=True)
         
-        st.markdown("<h1>HỆ THỐNG CHẨN ĐOÁN VÕNG MẠC AI</h1>", unsafe_allow_html=True)
         st.markdown("""
-        <div class='intro-text'>
+        <p style='text-align: justify; font-size: 1.1rem; line-height: 1.6; margin-top: 20px;'>
             Đồ án nghiên cứu ứng dụng mô hình <b>Học sâu (Deep Learning)</b> với kiến trúc mạng <b>Gated EUPE (Vision Transformer)</b> tiên tiến. 
-            Hệ thống được huấn luyện trên tập dữ liệu y khoa chuẩn xác, có khả năng nhận diện tự động và phân loại <b>11 bệnh lý đáy mắt phức tạp</b> (như Võng mạc tiểu đường, Tăng nhãn áp, Thoái hóa điểm vàng...). <br><br>
-            Đây là giải pháp công nghệ hỗ trợ đắc lực cho các y bác sĩ trong quá trình tầm soát, tối ưu hóa quy trình khám chữa bệnh và ra quyết định lâm sàng nhanh chóng, chính xác.
-        </div>
+            Hệ thống được huấn luyện trên tập dữ liệu y khoa chuẩn xác, có khả năng nhận diện tự động và phân loại <b>11 bệnh lý đáy mắt phức tạp</b> (như Võng mạc tiểu đường, Tăng nhãn áp, Thoái hóa điểm vàng...). 
+            Đây là giải pháp công nghệ hỗ trợ đắc lực cho các y bác sĩ trong quá trình tầm soát, tối ưu hóa quy trình khám chữa bệnh và ra quyết định lâm sàng.
+        </p>
         """, unsafe_allow_html=True)
         
-        if st.button("🚀 BẮT ĐẦU PHÂN TÍCH NGAY"):
-            change_page('diagnostic')
-            st.rerun()
-            
-        st.markdown("</div>", unsafe_allow_html=True)
+        st.write("")
+        # Nút bấm trang chủ đặt giữa
+        _, btn_col, _ = st.columns([1, 2, 1])
+        with btn_col:
+            st.markdown("<div class='home-btn'>", unsafe_allow_html=True)
+            if st.button("🚀 BẮT ĐẦU PHÂN TÍCH NGAY"):
+                change_page('diagnostic')
+                st.rerun()
+            st.markdown("</div>", unsafe_allow_html=True)
 
 else:
-    # --- ĐÃ SỬA: Dùng lệnh st.write kết hợp Markdown chuẩn để không bao giờ bị mất chữ ---
-    col_logo, col_nav1, col_nav2, col_nav3, _ = st.columns([2, 2, 2, 2, 4])
-    with col_logo:
-        st.markdown("**👁️ EUPE-ViT AI**")
-    with col_nav1:
-        st.markdown("<span style='color: #2e86c1; border-bottom: 2px solid #2e86c1;'>1. Phân tích ảnh nội soi</span>", unsafe_allow_html=True)
-    with col_nav2:
-        st.write("2. Báo cáo thống kê")
-    with col_nav3:
-        st.write("3. Hồ sơ y tế")
-        
-    st.divider() # Tạo đường kẻ phân cách
-    
-    st.markdown("<div class='back-btn-container'>", unsafe_allow_html=True)
-    if st.button("🔙 Quay lại"):
-        change_page('home')
-        st.rerun()
-    st.markdown("</div>", unsafe_allow_html=True)
-        
-    st.markdown("<h2 class='title-compact'>Giao diện phân tích bệnh lý</h2>", unsafe_allow_html=True)
-    st.markdown("<p class='subtitle-compact'>Cung cấp hình ảnh soi đáy mắt để thuật toán trích xuất đặc trưng và đánh giá rủi ro.</p>", unsafe_allow_html=True)
+    # --- TRANG CHẨN ĐOÁN: Bỏ Nav Ảo, Đưa lên cao, Căn chỉnh gọn gàng ---
+    # Layout nút quay lại và tiêu đề cùng một hàng để tiết kiệm chỗ
+    col_back, col_title = st.columns([1, 8])
+    with col_back:
+        st.write("")
+        if st.button("🔙 Quay lại"):
+            change_page('home')
+            st.rerun()
+    with col_title:
+        st.markdown("<h2 style='margin-bottom: 0; padding-bottom: 0;'>Giao diện phân tích bệnh lý</h2>", unsafe_allow_html=True)
+        st.markdown("<p style='color: var(--text-color); opacity: 0.7; margin-top: 5px;'>Cung cấp hình ảnh soi đáy mắt để thuật toán trích xuất đặc trưng và đánh giá rủi ro.</p>", unsafe_allow_html=True)
 
+    # Chia khối 1:2 chuẩn
     col_left, col_right = st.columns([1.2, 2.5])
     
     with col_left:
         st.markdown("#### 📂 Dữ liệu đầu vào")
-        st.info("Định dạng cho phép: PNG, JPG, JPEG")
+        st.info("Định dạng: PNG, JPG, JPEG")
         uploaded_file = st.file_uploader("Tải ảnh", type=["png", "jpg", "jpeg"], label_visibility="collapsed")
         
         st.write("")
-        st.markdown("Click vào nút bên dưới để khởi chạy quy trình phân tích của AI.")
+        st.markdown("Click nút bên dưới để khởi chạy AI.")
         predict_button = st.button("🔍 Khởi chạy Trí tuệ nhân tạo", disabled=(uploaded_file is None))
 
     with col_right:
         if uploaded_file is None:
             st.markdown("""
             <div class='result-placeholder'>
-                <div style='font-size: 55px; background: rgba(52, 152, 219, 0.1); padding: 20px; border-radius: 50%; margin-bottom: 20px;'>🔬</div>
+                <div style='font-size: 55px; background: rgba(52, 152, 219, 0.1); padding: 15px; border-radius: 50%; margin-bottom: 15px;'>🔬</div>
                 <h3>Bảng Điều Khiển AI</h3>
-                <p style='font-size: 1.1rem; max-width: 80%;'>Hệ thống đang chờ dữ liệu. Vui lòng tải lên ảnh chụp võng mạc từ menu bên trái để thuật toán tiến hành chẩn đoán và xuất bản đồ tổn thương.</p>
+                <p style='font-size: 1rem; max-width: 80%; opacity: 0.8;'>Hệ thống đang chờ dữ liệu. Vui lòng tải lên ảnh chụp võng mạc để thuật toán phân tích và xuất bản đồ tổn thương.</p>
             </div>
             """, unsafe_allow_html=True)
         else:
@@ -276,7 +208,7 @@ else:
                 st.markdown("#### Hình ảnh đang chờ xử lý")
                 st.image(original_image, use_container_width=True)
             else:
-                with st.spinner('⏳ Thuật toán đang quét và đối chiếu các điểm ảnh bất thường...'):
+                with st.spinner('⏳ Đang quét và đối chiếu điểm ảnh bất thường...'):
                     try:
                         model = load_model()
                         tensor_img = eval_transform(cropped_image).unsqueeze(0)
@@ -297,21 +229,20 @@ else:
                     
                     res_col1, res_col2 = st.columns(2)
                     with res_col1:
-                        st.markdown("**Ảnh đã qua tiền xử lý (Cắt viền)**")
+                        st.markdown("**Ảnh tiền xử lý**")
                         st.image(cropped_image, use_container_width=True)
                     with res_col2:
-                        st.markdown("**Bản đồ vùng chú ý của AI (Heatmap)**")
+                        st.markdown("**Bản đồ vùng chú ý (Heatmap)**")
                         st.image(heatmap_img, use_container_width=True)
                     
-                    st.write("---")
                     st.markdown("#### 📝 Kết luận lâm sàng từ AI")
                     card_status = "" if is_healthy else "ai-disease"
                     color_hex = "#28b463" if is_healthy else "#e74c3c"
                     
                     st.markdown(f"""
                     <div class='ai-result-card {card_status}'>
-                        <div style='font-weight: bold;'>NGUY CƠ CAO NHẤT:</div>
-                        <h2 style='color: {color_hex}; margin-top: 5px; margin-bottom: 5px;'>{class_names[top3_idx[0]]}</h2>
+                        <div style='font-weight: bold; opacity: 0.8;'>NGUY CƠ CAO NHẤT:</div>
+                        <h2 style='color: {color_hex}; margin: 5px 0;'>{class_names[top3_idx[0]]}</h2>
                         <div style='display: inline-block; background: rgba(128,128,128,0.1); padding: 5px 15px; border-radius: 20px; font-weight: bold;'>Độ tin cậy: {probs[top3_idx[0]]*100:.2f}%</div>
                     </div>
                     """, unsafe_allow_html=True)
