@@ -19,12 +19,15 @@ def change_page(page_name):
     st.session_state.current_page = page_name
 
 # ==========================================
-# 2. CSS DYNAMIC TÙY THEO TRANG (ĐÃ FIX LỖI ẢNH NỀN)
+# 2. CSS DYNAMIC TÙY THEO TRANG
 # ==========================================
 if st.session_state.current_page == 'home':
-    # Ép buộc nền bằng thẻ HTML phủ toàn màn hình (Cách này chắc chắn hiện 100%)
+    # --- ĐÃ SỬA: Ép ảnh nền nổi lên trên cùng (z-index: 9999) để trị Cốc Cốc ---
     st.markdown("""
         <style>
+            .stApp { background-color: transparent !important; }
+            [data-testid="stHeader"] { background: transparent !important; }
+            
             #background-image {
                 position: fixed;
                 top: 0;
@@ -34,23 +37,26 @@ if st.session_state.current_page == 'home':
                 background-image: url("https://t3.ftcdn.net/jpg/00/79/70/58/360_F_79705868_f21hI0uSihy1yJq0H7sFmB2tO027q8bU.jpg");
                 background-size: cover;
                 background-position: center;
-                z-index: -999; /* Đẩy xuống lớp dưới cùng */
+                z-index: -1; 
             }
-            .block-container {
+            
+            .content-wrapper {
+                position: relative;
+                z-index: 9999; /* Đẩy nội dung và nền mờ lên cao nhất */
+            }
+            
+            .glass-box {
                 background-color: rgba(15, 32, 39, 0.85); 
                 backdrop-filter: blur(8px);
                 -webkit-backdrop-filter: blur(8px);
                 border-radius: 20px;
                 padding: 4rem 3rem;
-                margin-top: 15vh;
+                margin: 15vh auto 0 auto;
                 max-width: 900px;
                 text-align: center;
                 box-shadow: 0 20px 50px rgba(0,0,0,0.5);
                 border: 1px solid rgba(255,255,255,0.1);
             }
-            /* Ghi đè màu nền mặc định của Streamlit */
-            .stApp { background-color: transparent !important; }
-            [data-testid="stHeader"] { background: transparent !important; }
             
             h1 { color: #ffffff !important; font-size: 3.5rem !important; margin-bottom: 20px !important; letter-spacing: 1px; }
             .intro-text { color: #e0e0e0 !important; font-size: 1.25rem !important; line-height: 1.8 !important; text-align: justify; margin-bottom: 30px; }
@@ -65,6 +71,8 @@ if st.session_state.current_page == 'home':
                 border: none;
                 transition: all 0.3s ease;
                 box-shadow: 0 8px 20px rgba(31, 119, 180, 0.4);
+                display: block;
+                margin: 0 auto;
             }
             div.stButton > button:hover {
                 transform: scale(1.05);
@@ -77,11 +85,10 @@ if st.session_state.current_page == 'home':
     """, unsafe_allow_html=True)
 
 else:
-    # CSS TRANG CHẨN ĐOÁN - THU GỌN LỀ ĐỂ ĐẨY BẢNG ĐIỀU KHIỂN LÊN CAO
+    # --- ĐÃ SỬA: Lấy lại các thanh tác vụ bị mất bằng cách cố định màu chữ ---
     st.markdown("""
     <style>
         .stApp { background-color: var(--background-color); }
-        /* Giảm padding top xuống để kéo nội dung lên sát mép trên */
         .block-container { padding-top: 1rem !important; max-width: 1400px; }
         
         .top-nav {
@@ -89,17 +96,16 @@ else:
             align-items: center;
             padding-bottom: 10px;
             border-bottom: 2px solid rgba(128,128,128,0.1);
-            margin-bottom: 15px; /* Giảm margin bottom */
+            margin-bottom: 15px; 
         }
         .nav-item {
             font-weight: 600;
-            color: var(--text-color); 
-            opacity: 0.6;
+            color: #7f8c8d; /* Dùng mã màu xám cố định thay vì biến để tránh mất chữ */
             padding: 5px 15px;
             border-bottom: 3px solid transparent;
             cursor: default;
         }
-        .nav-item.active { color: #2e86c1; opacity: 1; border-bottom-color: #2e86c1; }
+        .nav-item.active { color: #2e86c1; border-bottom-color: #2e86c1; }
         
         .result-placeholder {
             background-color: var(--secondary-background-color);
@@ -109,9 +115,8 @@ else:
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            height: 420px; /* Thu nhỏ chiều cao hộp điều khiển một chút */
-            color: var(--text-color);
-            opacity: 0.8;
+            height: 420px; 
+            color: #7f8c8d; /* Dùng mã màu xám cố định */
             text-align: center;
             padding: 20px;
         }
@@ -137,9 +142,8 @@ else:
         }
         .ai-disease { border-left-color: #e74c3c; }
         
-        /* Chỉnh riêng khoảng cách của các thẻ tiêu đề */
         .title-compact { font-size: 2rem !important; margin-bottom: 0px !important; padding-bottom: 0px !important;}
-        .subtitle-compact { font-size: 1rem !important; margin-top: 5px !important; margin-bottom: 15px !important;}
+        .subtitle-compact { font-size: 1rem !important; margin-top: 5px !important; margin-bottom: 15px !important; color: #7f8c8d;}
     </style>
     """, unsafe_allow_html=True)
 
@@ -209,22 +213,28 @@ eval_transform = transforms.Compose([transforms.Resize((224, 224)), transforms.T
 # ==========================================
 
 if st.session_state.current_page == 'home':
-    st.markdown("<h1>HỆ THỐNG CHẨN ĐOÁN VÕNG MẠC AI</h1>", unsafe_allow_html=True)
+    # Bao bọc nội dung trong thẻ div z-index cao để trị lỗi nền Cốc Cốc
     st.markdown("""
-    <div class='intro-text'>
-        Đồ án nghiên cứu ứng dụng mô hình <b>Học sâu (Deep Learning)</b> với kiến trúc mạng <b>Gated EUPE (Vision Transformer)</b> tiên tiến. 
-        Hệ thống được huấn luyện trên tập dữ liệu y khoa chuẩn xác, có khả năng nhận diện tự động và phân loại <b>11 bệnh lý đáy mắt phức tạp</b> (như Võng mạc tiểu đường, Tăng nhãn áp, Thoái hóa điểm vàng...). <br><br>
-        Đây là giải pháp công nghệ hỗ trợ đắc lực cho các y bác sĩ trong quá trình tầm soát, tối ưu hóa quy trình khám chữa bệnh và ra quyết định lâm sàng nhanh chóng, chính xác.
+    <div class='content-wrapper'>
+        <div class='glass-box'>
+            <h1>HỆ THỐNG CHẨN ĐOÁN VÕNG MẠC AI</h1>
+            <div class='intro-text'>
+                Đồ án nghiên cứu ứng dụng mô hình <b>Học sâu (Deep Learning)</b> với kiến trúc mạng <b>Gated EUPE (Vision Transformer)</b> tiên tiến. 
+                Hệ thống được huấn luyện trên tập dữ liệu y khoa chuẩn xác, có khả năng nhận diện tự động và phân loại <b>11 bệnh lý đáy mắt phức tạp</b> (như Võng mạc tiểu đường, Tăng nhãn áp, Thoái hóa điểm vàng...). <br><br>
+                Đây là giải pháp công nghệ hỗ trợ đắc lực cho các y bác sĩ trong quá trình tầm soát, tối ưu hóa quy trình khám chữa bệnh và ra quyết định lâm sàng nhanh chóng, chính xác.
+            </div>
+        </div>
     </div>
     """, unsafe_allow_html=True)
     
-    col1, col2, col3 = st.columns([1, 1.5, 1])
-    with col2:
-        if st.button("🚀 BẮT ĐẦU PHÂN TÍCH NGAY"):
-            change_page('diagnostic')
-            st.rerun()
+    # Nút bấm được đặt tự do (margin: 0 auto) để nằm ngay dưới khung nội dung
+    st.write("")
+    if st.button("🚀 BẮT ĐẦU PHÂN TÍCH NGAY"):
+        change_page('diagnostic')
+        st.rerun()
 
 else:
+    # Các dòng text trên thanh nav ảo đã được phục hồi màu
     st.markdown("""
     <div class='top-nav'>
         <div style='display: flex; gap: 20px; align-items: center;'>
@@ -242,9 +252,8 @@ else:
             change_page('home')
             st.rerun()
         
-    # Áp dụng class mới để thu gọn lề cho tiêu đề
     st.markdown("<h2 class='title-compact'>Giao diện phân tích bệnh lý</h2>", unsafe_allow_html=True)
-    st.markdown("<p class='subtitle-compact' style='color: var(--text-color); opacity: 0.7;'>Cung cấp hình ảnh soi đáy mắt để thuật toán trích xuất đặc trưng và đánh giá rủi ro.</p>", unsafe_allow_html=True)
+    st.markdown("<p class='subtitle-compact'>Cung cấp hình ảnh soi đáy mắt để thuật toán trích xuất đặc trưng và đánh giá rủi ro.</p>", unsafe_allow_html=True)
 
     col_left, col_right = st.columns([1.2, 2.5])
     
@@ -308,9 +317,9 @@ else:
                     
                     st.markdown(f"""
                     <div class='ai-result-card {card_status}'>
-                        <div style='color: var(--text-color); opacity: 0.7; font-weight: bold;'>NGUY CƠ CAO NHẤT:</div>
+                        <div style='color: #7f8c8d; font-weight: bold;'>NGUY CƠ CAO NHẤT:</div>
                         <h2 style='color: {color_hex}; margin-top: 5px; margin-bottom: 5px;'>{class_names[top3_idx[0]]}</h2>
-                        <div style='display: inline-block; background: rgba(128,128,128,0.1); padding: 5px 15px; border-radius: 20px; font-weight: bold; color: var(--text-color);'>Độ tin cậy: {probs[top3_idx[0]]*100:.2f}%</div>
+                        <div style='display: inline-block; background: rgba(128,128,128,0.1); padding: 5px 15px; border-radius: 20px; font-weight: bold; color: #7f8c8d;'>Độ tin cậy: {probs[top3_idx[0]]*100:.2f}%</div>
                     </div>
                     """, unsafe_allow_html=True)
                     
