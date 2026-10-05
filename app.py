@@ -13,31 +13,30 @@ import time
 # ==========================================
 st.set_page_config(page_title="AI Chẩn Đoán Võng Mạc", page_icon="👁️", layout="wide", initial_sidebar_state="expanded")
 
-# --- BẢN VÁ LỖI HIỂN THỊ NỀN ---
 st.markdown("""
 <style>
-    /* 1. TẠO ẢNH NỀN Y TẾ FULL TRANG (FIX LỖI MẤT NỀN) */
+    /* 1. ẢNH NỀN Y TẾ CHUYÊN NGHIỆP (Phong cách Bác sĩ & Công nghệ) */
     .stApp {
-        background-image: url("https://img.freepik.com/free-vector/abstract-medical-wallpaper-with-hexagons_53876-116526.jpg");
+        background-image: url("https://img.freepik.com/free-photo/medical-technology-concept-with-doctor-touching-virtual-screen_53876-104054.jpg");
         background-size: cover;
         background-attachment: fixed;
         background-position: center;
     }
     
-    /* 2. PHỦ LỚP KÍNH MỜ (GLASSMORPHISM) ĐỂ CHỮ VẪN ĐỌC ĐƯỢC */
+    /* 2. KHUNG KÍNH MỜ BỌC NỘI DUNG (Đảm bảo luôn đọc được chữ ở cả Sáng/Tối) */
     .block-container {
-        background: var(--background-color);
-        /* Độ mờ thay đổi tự động: 90% để không bị rối mắt */
-        background-color: color-mix(in srgb, var(--background-color) 90%, transparent);
+        /* Sử dụng color-mix để nền mờ tự động chuyển Trắng/Đen theo chế độ của Streamlit */
+        background-color: color-mix(in srgb, var(--background-color) 88%, transparent);
         border-radius: 15px;
-        padding-top: 2rem;
-        padding-bottom: 2rem;
-        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        padding: 2rem;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
         backdrop-filter: blur(10px);
-        margin-top: 20px;
+        -webkit-backdrop-filter: blur(10px);
+        margin-top: 2rem;
+        margin-bottom: 2rem;
     }
 
-    /* 3. ĐỔ BÓNG VÀ VIỀN TÁCH BIỆT CHO KHUNG KẾT QUẢ */
+    /* 3. ĐỔ BÓNG VÀ CHI TIẾT KHỐI KẾT QUẢ */
     @keyframes fadeSlideUp {
         from { opacity: 0; transform: translateY(20px); }
         to { opacity: 1; transform: translateY(0); }
@@ -54,10 +53,9 @@ st.markdown("""
         animation: fadeSlideUp 0.5s ease-out forwards;
         margin: 10px 0px 25px 0px;
     }
-    .healthy { border-left-color: #00cc66; } 
-    .disease { border-left-color: #ff4b4b; } 
+    .healthy { border-left-color: #00cc66 !important; } 
+    .disease { border-left-color: #ff4b4b !important; } 
     
-    /* 4. CHỈNH CHU CÁC CHI TIẾT NHỎ */
     .confidence-badge {
         background-color: var(--background-color);
         color: var(--text-color);
@@ -81,15 +79,15 @@ st.markdown("""
         box-shadow: 0 12px 20px rgba(0, 0, 0, 0.15);
     }
     
-    /* Chỉnh nút bấm upload ảnh chìm vào nền */
     .css-1v0mbdj.etr89bj1 {
         background-color: transparent !important;
     }
 </style>
 """, unsafe_allow_html=True)
+
 # ==========================================
-# TỪ DÒNG NÀY TRỞ XUỐNG BẠN GIỮ NGUYÊN CODE CŨ
-# ... (Code mô hình và giao diện st.columns)
+# 2. KHAI BÁO KIẾN TRÚC MÔ HÌNH EUPE-ViT
+# ==========================================
 class OptimalAttentiveProbe(nn.Module):
     def __init__(self, in_dim=384, num_classes=11, dropout_p=0.1): 
         super().__init__()
@@ -117,6 +115,9 @@ class EUPE_ViT_Optimal(nn.Module):
         features = self.backbone(x)
         return self.head(features)
 
+# ==========================================
+# 3. HÀM XỬ LÝ ẢNH & ĐỌC MÔ HÌNH
+# ==========================================
 @st.cache_resource
 def load_model():
     model = EUPE_ViT_Optimal(num_classes=11)
@@ -141,6 +142,7 @@ def crop_fundus(image):
     return Image.fromarray(cv2.cvtColor(img_cropped, cv2.COLOR_BGR2RGB))
 
 def generate_heatmap(model, tensor_img, original_img):
+    """Trích xuất Attention của ViT để vẽ Heatmap"""
     img_np = np.array(original_img)
     attentions = model.backbone.get_last_selfattention(tensor_img)
     cls_attn = attentions[0, :, 0, 1:] 
@@ -180,6 +182,9 @@ eval_transform = transforms.Compose([
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 ])
 
+# ==========================================
+# 4. GIAO DIỆN CHÍNH
+# ==========================================
 with st.sidebar:
     st.image("https://cdn-icons-png.flaticon.com/512/2865/2865744.png", width=80)
     st.markdown("## THÔNG TIN ĐỒ ÁN")
@@ -187,10 +192,11 @@ with st.sidebar:
     st.markdown("👨‍🎓 **SVTH:** [Tên của bạn]")
     st.markdown("👨‍🏫 **GVHD:** [Tên Giáo viên]")
 
-st.markdown("<h1 style='text-align: center;'>👁️ AI CHẨN ĐOÁN VÕNG MẠC</h1>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center;'>👁️️ AI CHẨN ĐOÁN VÕNG MẠC</h1>", unsafe_allow_html=True)
 st.markdown("<p style='text-align: center; font-size: 1.2rem; opacity: 0.7;'>Phát hiện tự động 11 loại bệnh lý về mắt với độ chính xác cao.</p>", unsafe_allow_html=True)
 st.write("")
 
+# Khu vực Upload
 col_up1, col_up2, col_up3 = st.columns([1, 4, 1])
 with col_up2:
     uploaded_file = st.file_uploader("📥 Tải ảnh đáy mắt lên tại đây (Hỗ trợ: PNG, JPG)", type=["png", "jpg", "jpeg"], label_visibility="collapsed")
