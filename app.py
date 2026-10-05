@@ -13,6 +13,7 @@ import time
 # ==========================================
 st.set_page_config(page_title="AI Chẩn Đoán Võng Mạc", page_icon="👁️", layout="wide", initial_sidebar_state="expanded")
 
+# CHỈ CHỈNH SỬA KHỐI CSS NÀY: Thêm viền mỏng và đổ bóng để nổi bật trên nền trắng
 st.markdown("""
 <style>
     @keyframes fadeSlideUp {
@@ -24,6 +25,11 @@ st.markdown("""
         padding: 25px;
         border-radius: 12px;
         border-left: 8px solid;
+        /* THÊM 3 DÒNG DƯỚI: Đổ bóng và viền bao quanh để tách khỏi nền trắng */
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        border-top: 1px solid rgba(128, 128, 128, 0.15);
+        border-right: 1px solid rgba(128, 128, 128, 0.15);
+        border-bottom: 1px solid rgba(128, 128, 128, 0.15);
         animation: fadeSlideUp 0.5s ease-out forwards;
         margin: 10px 0px 25px 0px;
     }
@@ -39,13 +45,19 @@ st.markdown("""
         display: inline-block;
         margin-top: 15px;
         border: 1px solid rgba(128,128,128,0.2);
+        /* THÊM BÓNG MỜ CHO NHÃN */
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
     }
     img {
-        border-radius: 8px;
-        transition: transform 0.3s ease;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        border-radius: 10px;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        /* THÊM BÓNG MỜ CHO ẢNH ĐỂ KHÔNG BỊ TỆP VÀO NỀN */
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
     }
-    img:hover { transform: scale(1.02); }
+    img:hover { 
+        transform: scale(1.02); 
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -108,26 +120,21 @@ def crop_fundus(image):
 def generate_heatmap(model, tensor_img, original_img):
     """Trích xuất Attention của ViT để vẽ Heatmap"""
     img_np = np.array(original_img)
-    # Lấy attention weights từ block cuối cùng của mạng DINO ViT
     attentions = model.backbone.get_last_selfattention(tensor_img)
-    # Tách attention của CLS token (index 0) so với các patch (từ index 1)
     cls_attn = attentions[0, :, 0, 1:] 
     
-    w_featmap = tensor_img.shape[-1] // 16 # 224/16 = 14
-    h_featmap = tensor_img.shape[-2] // 16 # 224/16 = 14
+    w_featmap = tensor_img.shape[-1] // 16 
+    h_featmap = tensor_img.shape[-2] // 16 
     
     cls_attn = cls_attn.reshape(cls_attn.shape[0], h_featmap, w_featmap)
-    # Lấy trung bình tất cả các head
     attn_map = cls_attn.mean(dim=0).detach().cpu().numpy()
     
-    # Normalize bản đồ nhiệt
     attn_map = (attn_map - attn_map.min()) / (attn_map.max() - attn_map.min() + 1e-8)
     attn_map = cv2.resize(attn_map, (img_np.shape[1], img_np.shape[0]))
     
     heatmap = cv2.applyColorMap(np.uint8(255 * attn_map), cv2.COLORMAP_JET)
     heatmap = cv2.cvtColor(heatmap, cv2.COLOR_BGR2RGB)
     
-    # Chồng Heatmap lên ảnh gốc với độ mờ 50%
     result = cv2.addWeighted(img_np, 0.5, heatmap, 0.5, 0)
     return Image.fromarray(result)
 
@@ -158,7 +165,7 @@ with st.sidebar:
     st.image("https://cdn-icons-png.flaticon.com/512/2865/2865744.png", width=80)
     st.markdown("## THÔNG TIN ĐỒ ÁN")
     st.info("Hệ thống dự đoán đa lớp bệnh lý võng mạc thông qua ảnh nội soi đáy mắt.")
-    st.markdown("👨‍‍🎓 **SVTH:** [Tên của bạn]")
+    st.markdown("👨‍🎓 **SVTH:** [Tên của bạn]")
     st.markdown("👨‍🏫 **GVHD:** [Tên Giáo viên]")
 
 st.markdown("<h1 style='text-align: center;'>👁️ AI CHẨN ĐOÁN VÕNG MẠC</h1>", unsafe_allow_html=True)
@@ -177,7 +184,6 @@ if uploaded_file is not None:
     
     col1, col2, col3 = st.columns([1.2, 0.2, 1.5])
     
-    # ---------------- BÊN TRÁI: HÌNH ẢNH ----------------
     with col1:
         st.subheader("🖼️ Quá trình xử lý ảnh", anchor=False)
         st.write("**📷 Ảnh Gốc**")
@@ -185,7 +191,6 @@ if uploaded_file is not None:
         st.write("**⚙️ Đã Cắt Viền Đen (Crop)**")
         st.image(cropped_image, use_container_width=True)
         
-    # ---------------- BÊN PHẢI: PHÂN TÍCH & KẾT QUẢ ----------------
     with col3:
         st.subheader("📊 Kết Quả Chẩn Đoán AI", anchor=False)
         predict_button = st.button("🚀 BẮT ĐẦU CHẨN ĐOÁN", type="primary", use_container_width=True)
@@ -199,7 +204,6 @@ if uploaded_file is not None:
                     with torch.no_grad():
                         outputs = model(tensor_img)
                         probs = F.softmax(outputs, dim=1)[0].numpy()
-                        # Tạo Heatmap bằng Attention của mô hình DINO ViT
                         heatmap_img = generate_heatmap(model, tensor_img, cropped_image)
                     
                     top3_idx = np.argsort(probs)[-3:][::-1]
@@ -214,7 +218,6 @@ if uploaded_file is not None:
                 st.toast('Hoàn tất phân tích!', icon='✅')
                 if is_healthy: st.balloons()
                 
-                # CHIA TABS KẾT QUẢ VÀ HEATMAP
                 tab1, tab2 = st.tabs(["📝 Chẩn Đoán & Báo Cáo", "🔥 Bản Đồ Chú Ý (AI Heatmap)"])
                 
                 with tab1:
@@ -237,7 +240,6 @@ if uploaded_file is not None:
                         st.caption(f"{class_names[idx]} (**{probs[idx]*100:.2f}%**)")
                         st.progress(int(probs[idx]*100))
                     
-                    # --- NÚT XUẤT BÁO CÁO Y TẾ (.TXT) ---
                     st.write("")
                     current_time = time.strftime('%Y-%m-%d %H:%M:%S')
                     report_content = f"""
