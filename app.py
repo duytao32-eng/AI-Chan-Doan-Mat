@@ -11,54 +11,93 @@ import time
 # ==========================================
 # 1. CẤU HÌNH GIAO DIỆN & CSS ANIMATION TÙY CHỈNH
 # ==========================================
-st.set_page_config(page_title="AI Chẩn Đoán Võng Mạc", page_icon="👁️", layout="wide")
+st.set_page_config(page_title="AI Chẩn Đoán Võng Mạc", page_icon="👁️", layout="wide", initial_sidebar_state="collapsed")
 
-# CSS Animation mượt mà
 st.markdown("""
 <style>
-    @keyframes slideUpFade {
-        from { opacity: 0; transform: translateY(30px); }
-        to { opacity: 1; transform: translateY(0); }
+    /* Tổng thể App */
+    .stApp {
+        background-color: #f4f6f9;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
-    .result-card {
-        background-color: #f8f9f9;
-        padding: 20px;
-        border-radius: 12px;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-        border-left: 6px solid #2e86c1;
-        animation: slideUpFade 0.6s ease-out forwards;
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-    .result-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 20px rgba(0,0,0,0.15);
-    }
-    .result-healthy { border-left-color: #28b463; }
-    .result-disease { border-left-color: #e74c3c; }
     
-    img {
-        border-radius: 10px;
-        transition: transform 0.4s ease;
-    }
-    img:hover {
-        transform: scale(1.02);
-    }
-
+    /* Chỉnh nút bấm siêu to khổng lồ cho Mobile */
     div.stButton > button:first-child {
-        background: linear-gradient(135deg, #1f77b4, #154360);
+        background: linear-gradient(135deg, #2874A6, #1B4F72);
         color: white;
-        border-radius: 8px;
-        padding: 12px 24px;
-        font-weight: bold;
+        border-radius: 12px;
+        padding: 16px 24px;
+        font-size: 18px !important;
+        font-weight: 700;
         border: none;
         transition: all 0.3s ease 0s;
         width: 100%;
-        box-shadow: 0px 4px 10px rgba(0,0,0,0.2);
+        box-shadow: 0px 6px 15px rgba(40, 116, 166, 0.4);
+        text-transform: uppercase;
+        letter-spacing: 1px;
     }
     div.stButton > button:first-child:hover {
-        background: linear-gradient(135deg, #154360, #1f77b4);
-        box-shadow: 0px 8px 20px rgba(0,0,0,0.3);
-        transform: translateY(-2px);
+        background: linear-gradient(135deg, #1B4F72, #2874A6);
+        box-shadow: 0px 8px 20px rgba(40, 116, 166, 0.6);
+        transform: translateY(-3px);
+    }
+    
+    /* Khung Expander chứa ảnh (giấu ảnh đi cho gọn) */
+    .streamlit-expanderHeader {
+        background-color: #ffffff;
+        border-radius: 8px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        font-weight: 600;
+        color: #2c3e50;
+    }
+    
+    /* Animation Thẻ Kết Quả */
+    @keyframes slideUpFade {
+        from { opacity: 0; transform: translateY(40px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .result-card {
+        background-color: #ffffff;
+        padding: 25px;
+        border-radius: 15px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+        border-left: 8px solid #2e86c1;
+        animation: slideUpFade 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        margin-top: 15px;
+        margin-bottom: 25px;
+    }
+    .result-healthy { border-left-color: #2ECC71; }
+    .result-disease { border-left-color: #E74C3C; }
+    
+    .result-card h4 {
+        color: #7f8c8d;
+        font-size: 1.1rem;
+        margin-bottom: 5px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    .result-card h2 {
+        margin-top: 0;
+        font-size: 1.8rem;
+        font-weight: 800;
+        line-height: 1.2;
+    }
+    .result-card .confidence {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #34495e;
+        background-color: #ecf0f1;
+        display: inline-block;
+        padding: 5px 12px;
+        border-radius: 20px;
+        margin-top: 10px;
+    }
+    
+    /* Khung Up ảnh */
+    .css-1v0mbdj.etr89bj1 {
+        border: 2px dashed #3498db;
+        border-radius: 15px;
+        background-color: #ebf5fb;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -140,92 +179,95 @@ eval_transform = transforms.Compose([
 ])
 
 # ==========================================
-# 4. TRANG CHÍNH & SIDEBAR
+# 4. GIAO DIỆN CHÍNH (Đã Tối Ưu Cho Mobile)
 # ==========================================
 with st.sidebar:
-    st.image("https://cdn-icons-png.flaticon.com/512/2865/2865744.png", width=80)
+    st.image("https://cdn-icons-png.flaticon.com/512/2865/2865744.png", width=100)
     st.markdown("## THÔNG TIN ĐỒ ÁN")
-    st.info("Đề tài: Dự đoán đa lớp bệnh lý võng mạc thông qua ảnh nội soi đáy mắt sử dụng Học Sâu.")
-    
-    st.markdown("### Nhóm Thực Hiện")
+    st.info("Hệ thống dự đoán đa lớp bệnh lý võng mạc thông qua ảnh nội soi đáy mắt.")
     st.markdown("👨‍🎓 **SVTH:** [Tên của bạn]")
     st.markdown("👨‍🏫 **GVHD:** [Tên Giáo viên]")
-    
-    st.divider()
-    st.markdown("### Công nghệ")
-    st.markdown("🧠 **AI Model:** Gated EUPE (DINO ViT-S/16)")
-    st.markdown("⚙ **FrameWork:** PyTorch, OpenCV, Streamlit")
 
-st.markdown("<h1 style='text-align: center; color: #154360;'>👁️ HỆ THỐNG HỖ TRỢ CHẨN ĐOÁN VÕNG MẠC</h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; font-size: 1.2rem; color: #5d6d7e;'>Phân tích và phát hiện tự động 11 loại bệnh lý về mắt với độ chính xác cao.</p>", unsafe_allow_html=True)
-st.write("")
+st.markdown("<h1 style='text-align: center; color: #1B4F72; font-size: 2.2rem;'>👁️ AI CHẨN ĐOÁN VÕNG MẠC</h1>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: #7f8c8d; font-size: 1rem; margin-bottom: 30px;'>Phát hiện tự động 11 loại bệnh lý về mắt với độ chính xác cao.</p>", unsafe_allow_html=True)
 
-# Khu vực Upload
-upload_col, _ = st.columns([2, 1])
-with upload_col:
-    uploaded_file = st.file_uploader("📥 Tải ảnh đáy mắt lên tại đây (PNG, JPG, JPEG)", type=["png", "jpg", "jpeg"])
+# 1. Khu vực Upload (Được căn giữa)
+col_up1, col_up2, col_up3 = st.columns([1, 4, 1])
+with col_up2:
+    uploaded_file = st.file_uploader("Tải ảnh đáy mắt lên (PNG, JPG)", type=["png", "jpg", "jpeg"], label_visibility="collapsed")
 
 if uploaded_file is not None:
-    st.divider()
     original_image = Image.open(uploaded_file).convert('RGB')
     
-    col1, col2, col3 = st.columns([1, 1, 1.2])
-    with col1:
-        st.markdown("<h4 style='text-align: center; color: #34495e;'>📷 Ảnh Gốc</h4>", unsafe_allow_html=True)
-        st.image(original_image, use_container_width=True)
-        
-    with col2:
-        st.markdown("<h4 style='text-align: center; color: #34495e;'>⚙️ Ảnh Crop Tự Động</h4>", unsafe_allow_html=True)
+    # 2. Giấu ảnh vào Expander để tiết kiệm không gian trên Mobile
+    with st.expander("🖼️ Xem ảnh đã tải lên và xử lý", expanded=False):
+        col_img1, col_img2 = st.columns(2)
+        with col_img1:
+            st.markdown("<p style='text-align: center; font-weight: bold;'>Ảnh Gốc</p>", unsafe_allow_html=True)
+            st.image(original_image, use_container_width=True)
+        with col_img2:
+            st.markdown("<p style='text-align: center; font-weight: bold;'>Đã Cắt Viền Đen (Crop)</p>", unsafe_allow_html=True)
+            cropped_image = crop_fundus(original_image)
+            st.image(cropped_image, use_container_width=True)
+    
+    if 'cropped_image' not in locals():
         cropped_image = crop_fundus(original_image)
-        st.image(cropped_image, use_container_width=True)
         
-    with col3:
-        st.markdown("<h4 style='text-align: center; color: #34495e;'>📊 Kết Quả Chẩn Đoán</h4>", unsafe_allow_html=True)
-        predict_button = st.button("🚀 XỬ LÝ PHÂN TÍCH")
-        
-        if predict_button:
-            # 1. Chạy tiến trình phân tích ngầm
-            with st.spinner('⏳ AI đang quét và phân tích tổn thương...'):
-                try:
-                    model = load_model()
-                    tensor_img = eval_transform(cropped_image).unsqueeze(0)
-                    
-                    with torch.no_grad():
-                        outputs = model(tensor_img)
-                        probs = F.softmax(outputs, dim=1)[0].numpy()
-                    
-                    top3_idx = np.argsort(probs)[-3:][::-1]
-                    is_healthy = (top3_idx[0] == 6)
-                    success = True
-                    time.sleep(0.5)
-                except Exception as e:
-                    st.error(f"Đã xảy ra lỗi: {e}")
-                    success = False
-            
-            # 2. Hiển thị kết quả sau khi phân tích xong (Đưa ra ngoài st.spinner)
-            if success:
-                st.toast('Hoàn tất phân tích dữ liệu!', icon='✅')
-                if is_healthy:
-                    st.balloons()
+    st.write("")
+    
+    # 3. Nút bấm Khổng lồ
+    col_btn1, col_btn2, col_btn3 = st.columns([1, 4, 1])
+    with col_btn2:
+        predict_button = st.button("🚀 Bắt Đầu Chẩn Đoán")
+    
+    if predict_button:
+        with st.spinner('⏳ AI đang phân tích hàng triệu điểm ảnh...'):
+            time.sleep(0.8) # Hiệu ứng chờ chân thực
+            try:
+                model = load_model()
+                tensor_img = eval_transform(cropped_image).unsqueeze(0)
                 
+                with torch.no_grad():
+                    outputs = model(tensor_img)
+                    probs = F.softmax(outputs, dim=1)[0].numpy()
+                
+                top3_idx = np.argsort(probs)[-3:][::-1]
+                is_healthy = (top3_idx[0] == 6)
+                success = True
+                
+            except Exception as e:
+                st.error(f"Đã xảy ra lỗi: {e}")
+                success = False
+        
+        # 4. Hiển thị Kết Quả (Nổi bật)
+        if success:
+            st.toast('Hoàn tất phân tích!', icon='✅')
+            if is_healthy:
+                st.balloons()
+            
+            # Khối UI Kết quả Top 1
+            col_res1, col_res2, col_res3 = st.columns([1, 6, 1])
+            with col_res2:
                 card_class = "result-healthy" if is_healthy else "result-disease"
                 top1_name = class_names[top3_idx[0]]
                 top1_conf = probs[top3_idx[0]] * 100
+                color_hex = "#2ECC71" if is_healthy else "#E74C3C"
                 
-                # Sửa lỗi chữ ẩn trong Dark Mode bằng cách thêm color: #2c3e50
                 st.markdown(f"""
                 <div class='result-card {card_class}'>
-                    <h4 style='margin-top: 0; color: #2c3e50;'>Nguy cơ cao nhất:</h4>
-                    <h3 style='color: {"#28b463" if is_healthy else "#e74c3c"}; margin-bottom: 0;'>{top1_name}</h3>
-                    <p style='font-size: 18px; font-weight: bold; color: #2c3e50;'>Độ tin cậy: {top1_conf:.2f}%</p>
+                    <h4>Chẩn đoán chính:</h4>
+                    <h2 style='color: {color_hex};'>{top1_name}</h2>
+                    <div class='confidence'>Độ tin cậy: {top1_conf:.2f}%</div>
                 </div>
                 """, unsafe_allow_html=True)
-                st.write("")
                 
-                st.markdown("**Các nguy cơ khác:**")
+                # Top 2 & 3
+                st.markdown("<h4 style='color: #34495e;'>📊 CÁC NGUY CƠ KHÁC</h4>", unsafe_allow_html=True)
                 for i in range(1, 3):
                     idx = top3_idx[i]
                     disease_name = class_names[idx]
                     confidence = probs[idx] * 100
-                    st.write(f"{disease_name}: **{confidence:.2f}%**")
+                    st.write(f"{disease_name} (**{confidence:.1f}%**)")
                     st.progress(int(confidence))
+                
+                st.info("💡 Nên kết hợp với khám lâm sàng để có kết luận chính xác nhất.")
