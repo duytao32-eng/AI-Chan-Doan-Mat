@@ -19,20 +19,22 @@ def change_page(page_name):
     st.session_state.current_page = page_name
 
 # ==========================================
-# 2. CSS DYNAMIC TÙY THEO TRANG
+# 2. CSS DYNAMIC TÙY THEO TRANG (ĐÃ TINH CHỈNH)
 # ==========================================
 if st.session_state.current_page == 'home':
-    # CSS CHO TRANG CHỦ - ÉP BUỘC HIỂN THỊ ẢNH BÁC SĨ VÀ LÀM MƯỢT NÚT BẤM
+    # --- ĐÃ SỬA: SỬ DỤNG ĐÚNG ẢNH BẠN YÊU CẦU & CHỮ THÍCH ỨNG SÁNG/TỐI ---
     st.markdown("""
     <style>
         .stApp {
-            background-image: url("https://img.freepik.com/free-photo/medical-technology-concept-with-doctor-touching-virtual-screen_53876-104054.jpg") !important;
+            /* Sử dụng chính xác ảnh y tế lục giác bạn yêu cầu */
+            background-image: url("https://t3.ftcdn.net/jpg/00/79/70/58/360_F_79705868_f21hI0uSihy1yJq0H7sFmB2tO027q8bU.jpg") !important;
             background-size: cover !important;
             background-attachment: fixed !important;
             background-position: center !important;
         }
         .block-container {
-            background-color: rgba(15, 32, 39, 0.85); /* Nền tối mờ sang trọng */
+            /* Lớp kính mờ thông minh: tự động sáng/tối theo giao diện */
+            background-color: color-mix(in srgb, var(--background-color) 85%, transparent);
             backdrop-filter: blur(8px);
             -webkit-backdrop-filter: blur(8px);
             border-radius: 20px;
@@ -40,13 +42,13 @@ if st.session_state.current_page == 'home':
             margin-top: 8vh;
             max-width: 900px;
             text-align: center;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+            border: 1px solid rgba(128,128,128,0.2);
         }
-        h1 { color: #ffffff !important; font-size: 3.5rem !important; margin-bottom: 20px !important; letter-spacing: 1px; }
-        .intro-text { color: #e0e0e0 !important; font-size: 1.25rem !important; line-height: 1.8 !important; text-align: justify; margin-bottom: 30px; }
+        /* Chữ tự động lấy màu tương phản (Đen trong Light Mode, Trắng trong Dark Mode) */
+        h1 { color: var(--text-color) !important; font-size: 3.5rem !important; margin-bottom: 20px !important; letter-spacing: 1px; }
+        .intro-text { color: var(--text-color) !important; opacity: 0.85; font-size: 1.25rem !important; line-height: 1.8 !important; text-align: justify; margin-bottom: 30px; }
         
-        /* Hiệu ứng nút bấm mượt mà */
         div.stButton > button {
             background: linear-gradient(135deg, #1f77b4, #2874A6);
             color: white !important;
@@ -68,7 +70,7 @@ if st.session_state.current_page == 'home':
     """, unsafe_allow_html=True)
 
 else:
-    # CSS CHO TRANG CHẨN ĐOÁN
+    # --- ĐÃ SỬA: GIAO DIỆN CHẨN ĐOÁN (MÀU CHỮ THÍCH ỨNG) ---
     st.markdown("""
     <style>
         .stApp { background-image: none !important; }
@@ -83,12 +85,13 @@ else:
         }
         .nav-item {
             font-weight: 600;
-            color: #7f8c8d;
+            color: var(--text-color); /* Sửa thành biến động */
+            opacity: 0.6;
             padding: 5px 15px;
             border-bottom: 3px solid transparent;
             cursor: default;
         }
-        .nav-item.active { color: #2e86c1; border-bottom-color: #2e86c1; }
+        .nav-item.active { color: #2e86c1; opacity: 1; border-bottom-color: #2e86c1; }
         
         .result-placeholder {
             background-color: var(--secondary-background-color);
@@ -99,7 +102,8 @@ else:
             align-items: center;
             justify-content: center;
             height: 450px;
-            color: var(--text-color);
+            color: var(--text-color); /* Sửa thành biến động */
+            opacity: 0.8;
             text-align: center;
             padding: 20px;
         }
@@ -128,7 +132,7 @@ else:
     """, unsafe_allow_html=True)
 
 # ==========================================
-# 3. KHAI BÁO KIẾN TRÚC MÔ HÌNH
+# CÁC HÀM XỬ LÝ & AI ĐƯỢC GIỮ NGUYÊN 100%
 # ==========================================
 class OptimalAttentiveProbe(nn.Module):
     def __init__(self, in_dim=384, num_classes=11, dropout_p=0.1): 
@@ -167,21 +171,17 @@ def crop_fundus(image):
         img = img_bgr[y:y+h, x:x+w]
     return Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
 
-# ĐÃ SỬA LỖI SHAPE TENSOR TẠI ĐÂY
 def generate_heatmap(model, tensor_img, original_img):
     img_np = np.array(original_img)
-    attentions = model.backbone.get_last_selfattention(tensor_img) # shape: (1, 6, 197, 197)
+    attentions = model.backbone.get_last_selfattention(tensor_img) 
     num_heads = attentions.shape[1]
+    cls_attn = attentions[0, :, 0, 1:] 
     
-    # Bỏ token CLS đầu tiên, lấy attention của 196 patches còn lại
-    cls_attn = attentions[0, :, 0, 1:] # shape: (6, 196)
+    w_featmap = tensor_img.shape[-1] // 16 
+    h_featmap = tensor_img.shape[-2] // 16 
     
-    w_featmap = tensor_img.shape[-1] // 16 # 224//16 = 14
-    h_featmap = tensor_img.shape[-2] // 16 # 224//16 = 14
-    
-    # Reshape đúng kích thước: (số head, chiều cao, chiều rộng)
     cls_attn = cls_attn.reshape(num_heads, h_featmap, w_featmap) 
-    attn_map = cls_attn.mean(dim=0).detach().cpu().numpy() # Lấy trung bình các head -> (14, 14)
+    attn_map = cls_attn.mean(dim=0).detach().cpu().numpy()
     
     attn_map = (attn_map - attn_map.min()) / (attn_map.max() - attn_map.min() + 1e-8)
     attn_map = cv2.resize(attn_map, (img_np.shape[1], img_np.shape[0]))
@@ -197,7 +197,6 @@ eval_transform = transforms.Compose([transforms.Resize((224, 224)), transforms.T
 # ==========================================
 
 if st.session_state.current_page == 'home':
-    # --- GIAO DIỆN TRANG CHỦ (ĐÃ LÀM DÀI VÀ CHUYÊN NGHIỆP HƠN) ---
     st.markdown("<h1>HỆ THỐNG CHẨN ĐOÁN VÕNG MẠC AI</h1>", unsafe_allow_html=True)
     st.markdown("""
     <div class='intro-text'>
@@ -214,8 +213,6 @@ if st.session_state.current_page == 'home':
             st.rerun()
 
 else:
-    # --- GIAO DIỆN TRANG CHẨN ĐOÁN ---
-    # Đã xóa dòng "Hệ thống sẵn sàng" bên góc phải
     st.markdown("""
     <div class='top-nav'>
         <div style='display: flex; gap: 20px; align-items: center;'>
@@ -234,7 +231,8 @@ else:
             st.rerun()
         
     st.markdown("<h2>Giao diện phân tích bệnh lý</h2>", unsafe_allow_html=True)
-    st.markdown("<p style='color: #7f8c8d; margin-top: -10px;'>Cung cấp hình ảnh soi đáy mắt để thuật toán trích xuất đặc trưng và đánh giá rủi ro.</p>", unsafe_allow_html=True)
+    # Đã sửa màu chữ thành biến động var(--text-color)
+    st.markdown("<p style='color: var(--text-color); opacity: 0.7; margin-top: -10px;'>Cung cấp hình ảnh soi đáy mắt để thuật toán trích xuất đặc trưng và đánh giá rủi ro.</p>", unsafe_allow_html=True)
     st.write("")
 
     col_left, col_right = st.columns([1.2, 2.5])
@@ -250,7 +248,6 @@ else:
 
     with col_right:
         if uploaded_file is None:
-            # Viết lại hoàn toàn nội dung để không giống bản gốc
             st.markdown("""
             <div class='result-placeholder'>
                 <div style='font-size: 55px; background: rgba(52, 152, 219, 0.1); padding: 20px; border-radius: 50%; margin-bottom: 20px;'>🔬</div>
@@ -273,7 +270,6 @@ else:
                         with torch.no_grad():
                             outputs = model(tensor_img)
                             probs = F.softmax(outputs, dim=1)[0].numpy()
-                            # Heatmap nay đã hoạt động bình thường
                             heatmap_img = generate_heatmap(model, tensor_img, cropped_image)
                         
                         top3_idx = np.argsort(probs)[-3:][::-1]
@@ -299,11 +295,12 @@ else:
                     card_status = "" if is_healthy else "ai-disease"
                     color_hex = "#28b463" if is_healthy else "#e74c3c"
                     
+                    # Đã sửa màu chữ tiêu đề trong thẻ kết quả thành biến động
                     st.markdown(f"""
                     <div class='ai-result-card {card_status}'>
-                        <div style='color: #7f8c8d; font-weight: bold;'>NGUY CƠ CAO NHẤT:</div>
+                        <div style='color: var(--text-color); opacity: 0.7; font-weight: bold;'>NGUY CƠ CAO NHẤT:</div>
                         <h2 style='color: {color_hex}; margin-top: 5px; margin-bottom: 5px;'>{class_names[top3_idx[0]]}</h2>
-                        <div style='display: inline-block; background: rgba(128,128,128,0.1); padding: 5px 15px; border-radius: 20px; font-weight: bold;'>Độ tin cậy: {probs[top3_idx[0]]*100:.2f}%</div>
+                        <div style='display: inline-block; background: rgba(128,128,128,0.1); padding: 5px 15px; border-radius: 20px; font-weight: bold; color: var(--text-color);'>Độ tin cậy: {probs[top3_idx[0]]*100:.2f}%</div>
                     </div>
                     """, unsafe_allow_html=True)
                     
