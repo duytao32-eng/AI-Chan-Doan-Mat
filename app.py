@@ -6,6 +6,7 @@ import torch.nn.functional as F
 import numpy as np
 from torchvision import transforms
 from PIL import Image
+import base64
 
 # ==========================================
 # 1. CẤU HÌNH GIAO DIỆN & QUẢN LÝ TRẠNG THÁI
@@ -22,36 +23,47 @@ def change_page(page_name):
 # 2. CSS DYNAMIC TÙY THEO TRANG
 # ==========================================
 if st.session_state.current_page == 'home':
-    # --- ĐÃ SỬA: Ép ảnh nền nổi lên trên cùng (z-index: 9999) để trị Cốc Cốc ---
+    # --- CÁCH MỚI: Tắt sạch nền mặc định, chuẩn bị không gian cho hàm st.image ---
     st.markdown("""
         <style>
-            .stApp { background-color: transparent !important; }
-            [data-testid="stHeader"] { background: transparent !important; }
+            .stApp { background-color: #0e1117 !important; }
+            [data-testid="stHeader"] { display: none !important; }
+            [data-testid="collapsedControl"] { display: none !important; }
             
-            #background-image {
+            /* Khối chứa ảnh nền vật lý */
+            .bg-image-container {
                 position: fixed;
                 top: 0;
                 left: 0;
                 width: 100vw;
                 height: 100vh;
-                background-image: url("https://t3.ftcdn.net/jpg/00/79/70/58/360_F_79705868_f21hI0uSihy1yJq0H7sFmB2tO027q8bU.jpg");
-                background-size: cover;
-                background-position: center;
-                z-index: -1; 
+                z-index: 0;
+                overflow: hidden;
+            }
+            .bg-image-container img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                opacity: 0.6; /* Làm tối ảnh nền đi một chút */
             }
             
+            /* Khối nội dung nổi lên trên */
             .content-wrapper {
                 position: relative;
-                z-index: 9999; /* Đẩy nội dung và nền mờ lên cao nhất */
+                z-index: 10;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                min-height: 90vh;
             }
             
             .glass-box {
-                background-color: rgba(15, 32, 39, 0.85); 
-                backdrop-filter: blur(8px);
-                -webkit-backdrop-filter: blur(8px);
+                background-color: rgba(15, 32, 39, 0.7); 
+                backdrop-filter: blur(10px);
+                -webkit-backdrop-filter: blur(10px);
                 border-radius: 20px;
                 padding: 4rem 3rem;
-                margin: 15vh auto 0 auto;
                 max-width: 900px;
                 text-align: center;
                 box-shadow: 0 20px 50px rgba(0,0,0,0.5);
@@ -59,33 +71,30 @@ if st.session_state.current_page == 'home':
             }
             
             h1 { color: #ffffff !important; font-size: 3.5rem !important; margin-bottom: 20px !important; letter-spacing: 1px; }
-            .intro-text { color: #e0e0e0 !important; font-size: 1.25rem !important; line-height: 1.8 !important; text-align: justify; margin-bottom: 30px; }
+            .intro-text { color: #e0e0e0 !important; font-size: 1.25rem !important; line-height: 1.8 !important; text-align: justify; margin-bottom: 40px; }
             
             div.stButton > button {
-                background: linear-gradient(135deg, #1f77b4, #2874A6);
+                background: linear-gradient(135deg, #1f77b4, #2874A6) !important;
                 color: white !important;
-                border-radius: 30px;
-                padding: 15px 40px;
+                border-radius: 30px !important;
+                padding: 15px 40px !important;
                 font-size: 20px !important;
-                font-weight: bold;
-                border: none;
-                transition: all 0.3s ease;
-                box-shadow: 0 8px 20px rgba(31, 119, 180, 0.4);
+                font-weight: bold !important;
+                border: none !important;
+                transition: all 0.3s ease !important;
+                box-shadow: 0 8px 20px rgba(31, 119, 180, 0.4) !important;
                 display: block;
-                margin: 0 auto;
+                margin: 0 auto; /* Ép nút ra giữa */
             }
             div.stButton > button:hover {
-                transform: scale(1.05);
-                box-shadow: 0 12px 30px rgba(31, 119, 180, 0.7);
-                background: linear-gradient(135deg, #2874A6, #1f77b4);
+                transform: scale(1.05) !important;
+                box-shadow: 0 12px 30px rgba(31, 119, 180, 0.7) !important;
             }
-            [data-testid="collapsedControl"] { display: none; }
         </style>
-        <div id="background-image"></div>
     """, unsafe_allow_html=True)
 
 else:
-    # --- ĐÃ SỬA: Lấy lại các thanh tác vụ bị mất bằng cách cố định màu chữ ---
+    # --- TRANG CHẨN ĐOÁN: Fix lỗi mất chữ thanh Nav ---
     st.markdown("""
     <style>
         .stApp { background-color: var(--background-color); }
@@ -95,17 +104,15 @@ else:
             display: flex;
             align-items: center;
             padding-bottom: 10px;
-            border-bottom: 2px solid rgba(128,128,128,0.1);
+            border-bottom: 2px solid rgba(128,128,128,0.2);
             margin-bottom: 15px; 
         }
         .nav-item {
             font-weight: 600;
-            color: #7f8c8d; /* Dùng mã màu xám cố định thay vì biến để tránh mất chữ */
             padding: 5px 15px;
             border-bottom: 3px solid transparent;
             cursor: default;
         }
-        .nav-item.active { color: #2e86c1; border-bottom-color: #2e86c1; }
         
         .result-placeholder {
             background-color: var(--secondary-background-color);
@@ -116,7 +123,7 @@ else:
             align-items: center;
             justify-content: center;
             height: 420px; 
-            color: #7f8c8d; /* Dùng mã màu xám cố định */
+            color: #7f8c8d;
             text-align: center;
             padding: 20px;
         }
@@ -213,35 +220,44 @@ eval_transform = transforms.Compose([transforms.Resize((224, 224)), transforms.T
 # ==========================================
 
 if st.session_state.current_page == 'home':
-    # Bao bọc nội dung trong thẻ div z-index cao để trị lỗi nền Cốc Cốc
+    # HIỂN THỊ ẢNH BẰNG THẺ IMG TRỰC TIẾP ĐỂ TRỊ CỐC CỐC
     st.markdown("""
-    <div class='content-wrapper'>
-        <div class='glass-box'>
-            <h1>HỆ THỐNG CHẨN ĐOÁN VÕNG MẠC AI</h1>
-            <div class='intro-text'>
-                Đồ án nghiên cứu ứng dụng mô hình <b>Học sâu (Deep Learning)</b> với kiến trúc mạng <b>Gated EUPE (Vision Transformer)</b> tiên tiến. 
-                Hệ thống được huấn luyện trên tập dữ liệu y khoa chuẩn xác, có khả năng nhận diện tự động và phân loại <b>11 bệnh lý đáy mắt phức tạp</b> (như Võng mạc tiểu đường, Tăng nhãn áp, Thoái hóa điểm vàng...). <br><br>
-                Đây là giải pháp công nghệ hỗ trợ đắc lực cho các y bác sĩ trong quá trình tầm soát, tối ưu hóa quy trình khám chữa bệnh và ra quyết định lâm sàng nhanh chóng, chính xác.
-            </div>
+        <div class="bg-image-container">
+            <img src="https://t3.ftcdn.net/jpg/00/79/70/58/360_F_79705868_f21hI0uSihy1yJq0H7sFmB2tO027q8bU.jpg" alt="background">
         </div>
-    </div>
     """, unsafe_allow_html=True)
     
-    # Nút bấm được đặt tự do (margin: 0 auto) để nằm ngay dưới khung nội dung
-    st.write("")
-    if st.button("🚀 BẮT ĐẦU PHÂN TÍCH NGAY"):
-        change_page('diagnostic')
-        st.rerun()
+    # NỘI DUNG TRANG CHỦ BỌC TRONG KHỐI CĂN GIỮA
+    with st.container():
+        st.markdown("""
+        <div class='content-wrapper'>
+            <div class='glass-box'>
+                <h1>HỆ THỐNG CHẨN ĐOÁN VÕNG MẠC AI</h1>
+                <div class='intro-text'>
+                    Đồ án nghiên cứu ứng dụng mô hình <b>Học sâu (Deep Learning)</b> với kiến trúc mạng <b>Gated EUPE (Vision Transformer)</b> tiên tiến. 
+                    Hệ thống được huấn luyện trên tập dữ liệu y khoa chuẩn xác, có khả năng nhận diện tự động và phân loại <b>11 bệnh lý đáy mắt phức tạp</b> (như Võng mạc tiểu đường, Tăng nhãn áp, Thoái hóa điểm vàng...). <br><br>
+                    Đây là giải pháp công nghệ hỗ trợ đắc lực cho các y bác sĩ trong quá trình tầm soát, tối ưu hóa quy trình khám chữa bệnh và ra quyết định lâm sàng nhanh chóng, chính xác.
+                </div>
+        """, unsafe_allow_html=True)
+        
+        # Nút bấm được đặt TẮT NGAY bên trong container HTML để không bị lệch
+        col1, col2, col3 = st.columns([1, 1.5, 1])
+        with col2:
+            if st.button("🚀 BẮT ĐẦU PHÂN TÍCH NGAY"):
+                change_page('diagnostic')
+                st.rerun()
+                
+        st.markdown("</div></div>", unsafe_allow_html=True) # Đóng div glass-box và content-wrapper
 
 else:
-    # Các dòng text trên thanh nav ảo đã được phục hồi màu
+    # THANH NAV ẢO ĐÃ FIX LỖI MÀU CHỮ BẰNG CÁCH GÁN THẲNG MÃ HEX
     st.markdown("""
     <div class='top-nav'>
         <div style='display: flex; gap: 20px; align-items: center;'>
             <div style='font-size: 1.3rem; font-weight: 900; color: #2874a6;'>👁️ EUPE-ViT AI</div>
-            <div class='nav-item active'>1. Phân tích ảnh nội soi</div>
-            <div class='nav-item'>2. Báo cáo thống kê</div>
-            <div class='nav-item'>3. Hồ sơ y tế</div>
+            <div class='nav-item' style='color: #2e86c1; border-bottom: 3px solid #2e86c1; opacity: 1;'>1. Phân tích ảnh nội soi</div>
+            <div class='nav-item' style='color: #7f8c8d;'>2. Báo cáo thống kê</div>
+            <div class='nav-item' style='color: #7f8c8d;'>3. Hồ sơ y tế</div>
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -317,9 +333,9 @@ else:
                     
                     st.markdown(f"""
                     <div class='ai-result-card {card_status}'>
-                        <div style='color: #7f8c8d; font-weight: bold;'>NGUY CƠ CAO NHẤT:</div>
+                        <div style='color: var(--text-color); opacity: 0.7; font-weight: bold;'>NGUY CƠ CAO NHẤT:</div>
                         <h2 style='color: {color_hex}; margin-top: 5px; margin-bottom: 5px;'>{class_names[top3_idx[0]]}</h2>
-                        <div style='display: inline-block; background: rgba(128,128,128,0.1); padding: 5px 15px; border-radius: 20px; font-weight: bold; color: #7f8c8d;'>Độ tin cậy: {probs[top3_idx[0]]*100:.2f}%</div>
+                        <div style='display: inline-block; background: rgba(128,128,128,0.1); padding: 5px 15px; border-radius: 20px; font-weight: bold; color: var(--text-color);'>Độ tin cậy: {probs[top3_idx[0]]*100:.2f}%</div>
                     </div>
                     """, unsafe_allow_html=True)
                     
