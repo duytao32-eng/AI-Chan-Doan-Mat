@@ -8,7 +8,7 @@ from torchvision import transforms
 from PIL import Image
 
 # ==========================================
-# 1. CẤU HÌNH GIAO DIỆN & QUẢN LÝ TRẠNG THÁI (ROUTING)
+# 1. CẤU HÌNH GIAO DIỆN & QUẢN LÝ TRẠNG THÁI
 # ==========================================
 st.set_page_config(page_title="AI Chẩn Đoán Võng Mạc", page_icon="👁️", layout="wide", initial_sidebar_state="collapsed")
 
@@ -19,73 +19,81 @@ def change_page(page_name):
     st.session_state.current_page = page_name
 
 # ==========================================
-# 2. CSS DYNAMIC TÙY THEO TRANG (ĐÃ TINH CHỈNH)
+# 2. CSS DYNAMIC TÙY THEO TRANG (ĐÃ FIX LỖI ẢNH NỀN)
 # ==========================================
 if st.session_state.current_page == 'home':
-    # --- ĐÃ SỬA: SỬ DỤNG ĐÚNG ẢNH BẠN YÊU CẦU & CHỮ THÍCH ỨNG SÁNG/TỐI ---
+    # Ép buộc nền bằng thẻ HTML phủ toàn màn hình (Cách này chắc chắn hiện 100%)
     st.markdown("""
-    <style>
-        .stApp {
-            /* Sử dụng chính xác ảnh y tế lục giác bạn yêu cầu */
-            background-image: url("https://t3.ftcdn.net/jpg/00/79/70/58/360_F_79705868_f21hI0uSihy1yJq0H7sFmB2tO027q8bU.jpg") !important;
-            background-size: cover !important;
-            background-attachment: fixed !important;
-            background-position: center !important;
-        }
-        .block-container {
-            /* Lớp kính mờ thông minh: tự động sáng/tối theo giao diện */
-            background-color: color-mix(in srgb, var(--background-color) 85%, transparent);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            border-radius: 20px;
-            padding: 4rem 3rem;
-            margin-top: 8vh;
-            max-width: 900px;
-            text-align: center;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.2);
-            border: 1px solid rgba(128,128,128,0.2);
-        }
-        /* Chữ tự động lấy màu tương phản (Đen trong Light Mode, Trắng trong Dark Mode) */
-        h1 { color: var(--text-color) !important; font-size: 3.5rem !important; margin-bottom: 20px !important; letter-spacing: 1px; }
-        .intro-text { color: var(--text-color) !important; opacity: 0.85; font-size: 1.25rem !important; line-height: 1.8 !important; text-align: justify; margin-bottom: 30px; }
-        
-        div.stButton > button {
-            background: linear-gradient(135deg, #1f77b4, #2874A6);
-            color: white !important;
-            border-radius: 30px;
-            padding: 15px 40px;
-            font-size: 20px !important;
-            font-weight: bold;
-            border: none;
-            transition: all 0.3s ease;
-            box-shadow: 0 8px 20px rgba(31, 119, 180, 0.4);
-        }
-        div.stButton > button:hover {
-            transform: scale(1.05);
-            box-shadow: 0 12px 30px rgba(31, 119, 180, 0.7);
-            background: linear-gradient(135deg, #2874A6, #1f77b4);
-        }
-        [data-testid="collapsedControl"] { display: none; }
-    </style>
+        <style>
+            #background-image {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100vw;
+                height: 100vh;
+                background-image: url("https://t3.ftcdn.net/jpg/00/79/70/58/360_F_79705868_f21hI0uSihy1yJq0H7sFmB2tO027q8bU.jpg");
+                background-size: cover;
+                background-position: center;
+                z-index: -999; /* Đẩy xuống lớp dưới cùng */
+            }
+            .block-container {
+                background-color: rgba(15, 32, 39, 0.85); 
+                backdrop-filter: blur(8px);
+                -webkit-backdrop-filter: blur(8px);
+                border-radius: 20px;
+                padding: 4rem 3rem;
+                margin-top: 15vh;
+                max-width: 900px;
+                text-align: center;
+                box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+                border: 1px solid rgba(255,255,255,0.1);
+            }
+            /* Ghi đè màu nền mặc định của Streamlit */
+            .stApp { background-color: transparent !important; }
+            [data-testid="stHeader"] { background: transparent !important; }
+            
+            h1 { color: #ffffff !important; font-size: 3.5rem !important; margin-bottom: 20px !important; letter-spacing: 1px; }
+            .intro-text { color: #e0e0e0 !important; font-size: 1.25rem !important; line-height: 1.8 !important; text-align: justify; margin-bottom: 30px; }
+            
+            div.stButton > button {
+                background: linear-gradient(135deg, #1f77b4, #2874A6);
+                color: white !important;
+                border-radius: 30px;
+                padding: 15px 40px;
+                font-size: 20px !important;
+                font-weight: bold;
+                border: none;
+                transition: all 0.3s ease;
+                box-shadow: 0 8px 20px rgba(31, 119, 180, 0.4);
+            }
+            div.stButton > button:hover {
+                transform: scale(1.05);
+                box-shadow: 0 12px 30px rgba(31, 119, 180, 0.7);
+                background: linear-gradient(135deg, #2874A6, #1f77b4);
+            }
+            [data-testid="collapsedControl"] { display: none; }
+        </style>
+        <div id="background-image"></div>
     """, unsafe_allow_html=True)
 
 else:
-    # --- ĐÃ SỬA: GIAO DIỆN CHẨN ĐOÁN (MÀU CHỮ THÍCH ỨNG) ---
+    # CSS TRANG CHẨN ĐOÁN - THU GỌN LỀ ĐỂ ĐẨY BẢNG ĐIỀU KHIỂN LÊN CAO
     st.markdown("""
     <style>
-        .stApp { background-image: none !important; }
-        .block-container { padding-top: 2rem; max-width: 1400px; }
+        .stApp { background-color: var(--background-color); }
+        /* Giảm padding top xuống để kéo nội dung lên sát mép trên */
+        .block-container { padding-top: 1rem !important; max-width: 1400px; }
         
         .top-nav {
             display: flex;
             align-items: center;
-            padding-bottom: 15px;
+            padding-bottom: 10px;
             border-bottom: 2px solid rgba(128,128,128,0.1);
-            margin-bottom: 25px;
+            margin-bottom: 15px; /* Giảm margin bottom */
         }
         .nav-item {
             font-weight: 600;
-            color: var(--text-color); /* Sửa thành biến động */
+            color: var(--text-color); 
             opacity: 0.6;
             padding: 5px 15px;
             border-bottom: 3px solid transparent;
@@ -101,8 +109,8 @@ else:
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            height: 450px;
-            color: var(--text-color); /* Sửa thành biến động */
+            height: 420px; /* Thu nhỏ chiều cao hộp điều khiển một chút */
+            color: var(--text-color);
             opacity: 0.8;
             text-align: center;
             padding: 20px;
@@ -128,11 +136,15 @@ else:
             margin-bottom: 20px;
         }
         .ai-disease { border-left-color: #e74c3c; }
+        
+        /* Chỉnh riêng khoảng cách của các thẻ tiêu đề */
+        .title-compact { font-size: 2rem !important; margin-bottom: 0px !important; padding-bottom: 0px !important;}
+        .subtitle-compact { font-size: 1rem !important; margin-top: 5px !important; margin-bottom: 15px !important;}
     </style>
     """, unsafe_allow_html=True)
 
 # ==========================================
-# CÁC HÀM XỬ LÝ & AI ĐƯỢC GIỮ NGUYÊN 100%
+# 3. KHAI BÁO KIẾN TRÚC MÔ HÌNH (GIỮ NGUYÊN)
 # ==========================================
 class OptimalAttentiveProbe(nn.Module):
     def __init__(self, in_dim=384, num_classes=11, dropout_p=0.1): 
@@ -230,10 +242,9 @@ else:
             change_page('home')
             st.rerun()
         
-    st.markdown("<h2>Giao diện phân tích bệnh lý</h2>", unsafe_allow_html=True)
-    # Đã sửa màu chữ thành biến động var(--text-color)
-    st.markdown("<p style='color: var(--text-color); opacity: 0.7; margin-top: -10px;'>Cung cấp hình ảnh soi đáy mắt để thuật toán trích xuất đặc trưng và đánh giá rủi ro.</p>", unsafe_allow_html=True)
-    st.write("")
+    # Áp dụng class mới để thu gọn lề cho tiêu đề
+    st.markdown("<h2 class='title-compact'>Giao diện phân tích bệnh lý</h2>", unsafe_allow_html=True)
+    st.markdown("<p class='subtitle-compact' style='color: var(--text-color); opacity: 0.7;'>Cung cấp hình ảnh soi đáy mắt để thuật toán trích xuất đặc trưng và đánh giá rủi ro.</p>", unsafe_allow_html=True)
 
     col_left, col_right = st.columns([1.2, 2.5])
     
@@ -295,7 +306,6 @@ else:
                     card_status = "" if is_healthy else "ai-disease"
                     color_hex = "#28b463" if is_healthy else "#e74c3c"
                     
-                    # Đã sửa màu chữ tiêu đề trong thẻ kết quả thành biến động
                     st.markdown(f"""
                     <div class='ai-result-card {card_status}'>
                         <div style='color: var(--text-color); opacity: 0.7; font-weight: bold;'>NGUY CƠ CAO NHẤT:</div>
